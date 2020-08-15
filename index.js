@@ -2,24 +2,32 @@ const puppeteer = require('puppeteer-extra');
 const getRandomProxy = require('./helpers/getRandomProxy').getRandomProxy;
 const getRandomUserAgent = require('./helpers/getRandomUserAgent').getRandomUserAgent;
 
+require('./database');
+const {
+	ServiceURL,
+	CategoryURL,
+	ServiceInfo
+} = require('./database/Schemas');
+
 const StealthPlugin = require('puppeteer-extra-plugin-stealth')
 puppeteer.use(StealthPlugin());
 
 (async () => {
-	
+
 	let page,
 		browser,
 		proxy,
 		lastProxyIndex = false;
 
-	let categoryURLList = [
-		"https://www.fiverr.com/categories/graphics-design/creative-logo-design",
-		"https://www.fiverr.com/categories/graphics-design/brand-style-guides"
-	],
-		categoryURL
+	let categoryURLList = await CategoryURL.find({}, (err, urlList) => {
+		if (err) return console.error(err);
+		return urlList;
+	})
+
+	let categoryURL;
 
 	for (let i = 0; i < categoryURLList.length; i++) {
-		categoryURL = categoryURLList[i];
+		categoryURL = categoryURLList[i].url;
 
 		proxy = lastProxyIndex
 			? await getRandomProxy(lastProxyIndex)
@@ -27,7 +35,7 @@ puppeteer.use(StealthPlugin());
 		lastProxyIndex = proxy.index;
 
 		browser = await puppeteer.launch({
-			headless: true,
+			headless: false,
 			args: [`--proxy-server=${proxy.ip}:${proxy.port}`]
 		});
 		page = await browser.newPage();
@@ -48,6 +56,19 @@ puppeteer.use(StealthPlugin());
 			}
 		});
 
+		serviceURLList.forEach(url => {
+
+			let serviceURLItem = new ServiceURL({
+				categoryURL: `${categoryURL}`,
+				url: `${url}`
+			});
+		
+			serviceURLItem.save(function (err, serviceURLItem) {
+				if (err) return console.error(err);
+				console.log(url, ' — service url added');
+			});
+		})
+
 		await page.close();
 		await browser.close();
 
@@ -62,7 +83,7 @@ puppeteer.use(StealthPlugin());
 				lastProxyIndex = proxy.index;
 
 				browser = await puppeteer.launch({
-					headless: true,
+					headless: false,
 					args: [`--proxy-server=${proxy.ip}:${proxy.port}`]
 				});
 				page = await browser.newPage();
@@ -82,9 +103,24 @@ puppeteer.use(StealthPlugin());
 					let ordersInQueue = document.querySelector('.orders-in-queue')
 						? document.querySelector('.orders-in-queue').innerText.split(' ')[0]
 						: "0";
-					return `${category} — ${title} — ${ordersInQueue} in queue`;
+					
+					return {
+						category: category,
+						title: title,
+						ordersInQueue: ordersInQueue
+					}
 				});
-				console.log(serviceInfo);
+				
+				let serviceInfoItem = new ServiceInfo({
+					category: serviceInfo.category,
+					title: serviceInfo.title,
+					ordersInQueue: serviceInfo.ordersInQueue
+				});
+			
+				serviceInfoItem.save(function (err, serviceInfoItem) {
+					if (err) return console.error(err);
+					console.log(url, ' — service info added');
+				});
 
 				await page.waitFor(15000) // 15 seconds
 				await page.close();
