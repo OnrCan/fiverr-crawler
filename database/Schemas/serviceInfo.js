@@ -8,6 +8,6 @@ const serviceInfoSchema = new Schema({
 	ordersInQueue: String
 });
 
-const ServiceInfo = mongoose.model('ServiceURL', serviceInfoSchema);
+const ServiceInfo = mongoose.model('ServiceInfo', serviceInfoSchema);
 
 module.exports = ServiceInfo;
