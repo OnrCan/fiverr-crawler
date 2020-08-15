@@ -35,7 +35,7 @@ puppeteer.use(StealthPlugin());
 		lastProxyIndex = proxy.index;
 
 		browser = await puppeteer.launch({
-			headless: false,
+			headless: true,
 			args: [`--proxy-server=${proxy.ip}:${proxy.port}`]
 		});
 		page = await browser.newPage();
@@ -83,7 +83,7 @@ puppeteer.use(StealthPlugin());
 				lastProxyIndex = proxy.index;
 
 				browser = await puppeteer.launch({
-					headless: false,
+					headless: true,
 					args: [`--proxy-server=${proxy.ip}:${proxy.port}`]
 				});
 				page = await browser.newPage();

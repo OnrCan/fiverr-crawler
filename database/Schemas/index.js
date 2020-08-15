@@ -1,7 +1,7 @@
 
 const CategoryURL = require('./categoryURL');
 const ServiceURL = require('./serviceURL');
-const ServiceInfo = require('./ServiceInfo');
+const ServiceInfo = require('./serviceInfo');
 
 module.exports = {
   CategoryURL,
