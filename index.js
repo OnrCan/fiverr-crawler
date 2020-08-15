@@ -28,6 +28,7 @@ puppeteer.use(StealthPlugin());
 
 	for (let i = 0; i < categoryURLList.length; i++) {
 		categoryURL = categoryURLList[i].url;
+		console.log(`Scraping: ${categoryURLList}`);
 
 		proxy = lastProxyIndex
 			? await getRandomProxy(lastProxyIndex)
@@ -57,12 +58,10 @@ puppeteer.use(StealthPlugin());
 		});
 
 		serviceURLList.forEach(url => {
-
 			let serviceURLItem = new ServiceURL({
 				categoryURL: `${categoryURL}`,
 				url: `${url}`
 			});
-		
 			serviceURLItem.save(function (err, serviceURLItem) {
 				if (err) return console.error(err);
 				console.log(url, ' — service url added');
@@ -72,7 +71,7 @@ puppeteer.use(StealthPlugin());
 		await page.close();
 		await browser.close();
 
-		if (serviceURLList.length) { // no service url
+		if (serviceURLList.length) {
 
 			for (let k = 0; k < serviceURLList.length; k++) {
 				let serviceURL = serviceURLList[k];
