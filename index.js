@@ -111,11 +111,11 @@ puppeteer.use(StealthPlugin());
 					}
 				});
 
-				if (serviceInfoItem.title == "One Small Step") { // Banner
+				if (serviceInfo.title == "One Small Step") { // Banner
 					let failedRequestItem = new FailedRequest({
 						type: 'service',
 						categoryURL: categoryURL,
-						url: `https://www.jotform.com${serviceURL}`
+						url: `https://www.fiverr.com${serviceURL}`
 					});
 
 					failedRequestItem.save(function (err, failedRequestItem) {
