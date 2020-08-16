@@ -191,8 +191,6 @@ puppeteer.use(StealthPlugin());
 						});
 
 						tryAgain = true;
-						await page.close();
-						await browser.close();
 
 					} else {
 						tryAgain = false;
@@ -251,4 +249,8 @@ puppeteer.use(StealthPlugin());
 
 	await page.close();
 	await browser.close();
-})();
+
+	console.log("==============================")
+	console.log("CRAWLING FINISHED!")
+	console.log("==============================")
+})().then(process.exit());
