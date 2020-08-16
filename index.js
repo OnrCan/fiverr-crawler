@@ -210,11 +210,6 @@ puppeteer.use(StealthPlugin());
 							console.log(serviceInfoItem, ' — service info added');
 						});
 					}
-
-					await page.waitFor(process.env.WAIT_PAGE_DELAY || 8000)
-					await page.close();
-					await browser.close();
-
 				} catch (error) {
 					let failedRequestTimeoutService = new FailedRequest({
 						timeStamp: moment().format("DD-MM-YYYY hh:mm a"),
@@ -230,11 +225,11 @@ puppeteer.use(StealthPlugin());
 						if (err) return console.error(err);
 						console.log(failedRequestTimeoutService, ' — failed request info added (timeout)');
 					});
-
-					await page.close();
-					await browser.close();
 					tryAgain = true;
 				}
+				await page.waitFor(process.env.WAIT_PAGE_DELAY || 8000)
+				await page.close();
+				await browser.close();
 			}
 		} else {
 			let failedRequestItem = new FailedRequest({
