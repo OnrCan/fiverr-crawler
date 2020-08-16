@@ -253,4 +253,4 @@ puppeteer.use(StealthPlugin());
 	console.log("==============================")
 	console.log("CRAWLING FINISHED!")
 	console.log("==============================")
-})().then(process.exit());
+})().then(process.exit);
