@@ -2,6 +2,8 @@ const puppeteer = require('puppeteer-extra');
 const getRandomProxy = require('./helpers/getRandomProxy').getRandomProxy;
 const getRandomUserAgent = require('./helpers/getRandomUserAgent').getRandomUserAgent;
 
+const moment = require('moment');
+
 require('./database');
 const {
 	ServiceURL,
@@ -62,6 +64,7 @@ puppeteer.use(StealthPlugin());
 				tryAgain = false;
 			} catch (error) {
 				let failedRequestItemCategory = new FailedRequest({
+					timeStamp: moment().format("DD-MM-YYYY hh:mm a"),
 					type: 'category',
 					categoryURL: categoryURL,
 					proxyIP: `${proxy.ip}:${proxy.port}`,
@@ -118,6 +121,7 @@ puppeteer.use(StealthPlugin());
 		if (serviceURLList.length) {
 			serviceURLList.forEach(url => {
 				let serviceURLItem = new ServiceURL({
+					timeStamp: moment().format("DD-MM-YYYY hh:mm a"),
 					categoryURL: `${categoryURL}`,
 					url: `${url}`
 				});
@@ -172,6 +176,7 @@ puppeteer.use(StealthPlugin());
 
 					if (serviceInfo.title == "One Small Step" || serviceInfo.title == "Access Denied") { // Banned
 						let failedRequestItem = new FailedRequest({
+							timeStamp: moment().format("DD-MM-YYYY hh:mm a"),
 							type: 'service',
 							categoryURL: categoryURL,
 							url: `https://www.fiverr.com${serviceURL}`,
@@ -192,6 +197,7 @@ puppeteer.use(StealthPlugin());
 					} else {
 						tryAgain = false;
 						let serviceInfoItem = new ServiceInfo({
+							timeStamp: moment().format("DD-MM-YYYY hh:mm a"),
 							category: serviceInfo.category,
 							subCategory: serviceInfo.subCategory,
 							title: serviceInfo.title,
@@ -211,6 +217,7 @@ puppeteer.use(StealthPlugin());
 
 				} catch (error) {
 					let failedRequestTimeoutService = new FailedRequest({
+						timeStamp: moment().format("DD-MM-YYYY hh:mm a"),
 						type: 'service',
 						categoryURL: categoryURL,
 						url: `https://www.fiverr.com${serviceURL}`,
@@ -231,6 +238,7 @@ puppeteer.use(StealthPlugin());
 			}
 		} else {
 			let failedRequestItem = new FailedRequest({
+				timeStamp: moment().format("DD-MM-YYYY hh:mm a"),
 				type: 'category',
 				categoryURL: categoryURL,
 				proxyIP: `${proxy.ip}:${proxy.port}`,

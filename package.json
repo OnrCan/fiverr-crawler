@@ -9,6 +9,7 @@
   "author": "Onur Can ÖZKAN",
   "license": "ISC",
   "dependencies": {
+    "moment": "^2.27.0",
     "mongoose": "^5.10.0",
     "puppeteer": "^5.2.1",
     "puppeteer-extra": "^3.1.13",
