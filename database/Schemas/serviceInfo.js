@@ -5,7 +5,8 @@ const { Schema } = mongoose;
 const serviceInfoSchema = new Schema({
 	category: String,
 	title: String,
-	ordersInQueue: String
+	ordersInQueue: String,
+	url: String
 });
 
 const ServiceInfo = mongoose.model('ServiceInfo', serviceInfoSchema);
