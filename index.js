@@ -156,15 +156,15 @@ puppeteer.use(StealthPlugin());
 
 					let serviceInfo = await page.evaluate(() => {
 						let category = [...document.querySelectorAll('.breadcrumbs a')]
-							.map(el => el.innerText)
-							.join('/');
+							.map(el => el.innerText);
 						let title = document.querySelector('h1').innerText;
 						let ordersInQueue = document.querySelector('.orders-in-queue')
 							? document.querySelector('.orders-in-queue').innerText.split(' ')[0]
 							: "0";
 	
 						return {
-							category: category,
+							category: category[0],
+							subCategory: category[1],
 							title: title,
 							ordersInQueue: ordersInQueue
 						}
@@ -193,6 +193,7 @@ puppeteer.use(StealthPlugin());
 						tryAgain = false;
 						let serviceInfoItem = new ServiceInfo({
 							category: serviceInfo.category,
+							subCategory: serviceInfo.subCategory,
 							title: serviceInfo.title,
 							ordersInQueue: serviceInfo.ordersInQueue,
 							url: `https://www.fiverr.com${serviceURL}`
