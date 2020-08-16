@@ -5,7 +5,9 @@ const { Schema } = mongoose;
 const failedRequestSchema = new Schema({
 	type: String,
 	categoryURL: String,
-	url: String
+	url: String,
+	proxyIP: String,
+	userAgent: String
 });
 
 const FailedRequest = mongoose.model('FailedRequest', failedRequestSchema);
