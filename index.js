@@ -19,9 +19,11 @@ puppeteer.use(StealthPlugin());
 		browser,
 		proxy,
 		lastProxyIndex = false,
-		userAgent;
+		userAgent,
+		tryAgain = false;
 	
-	var serviceURLList = [];
+	var serviceURL,
+		serviceURLList = [];
 
 	let categoryURLList = await CategoryURL.find({}, (err, urlList) => {
 		if (err) return console.error(err);
@@ -32,10 +34,11 @@ puppeteer.use(StealthPlugin());
 
 	for (let i = 0; i < categoryURLList.length; i++) {
 		do {
-			pageNumber++;
-			categoryURL = `${categoryURLList[i].url}?page=${pageNumber}`;
-			console.log(`Scraping: ${categoryURL}`);
-
+			if (!tryAgain) {
+				pageNumber++;
+				categoryURL = `${categoryURLList[i].url}?page=${pageNumber}`;
+				console.log(`Scraping: ${categoryURL}`);
+			}
 			proxy = lastProxyIndex
 				? await getRandomProxy(lastProxyIndex)
 				: await getRandomProxy();
@@ -55,7 +58,8 @@ puppeteer.use(StealthPlugin());
 			await page.setUserAgent(`${userAgent}`);
 
 			try {
-				await page.goto(`${categoryURL}`, { waitUntil: 'load', timeout: 0 });	
+				await page.goto(`${categoryURL}`, { waitUntil: 'load', timeout: 0 });
+				tryAgain = false;
 			} catch (error) {
 				let failedRequestItemCategory = new FailedRequest({
 					type: 'category',
@@ -73,6 +77,7 @@ puppeteer.use(StealthPlugin());
 				await page.close();
 				await browser.close();
 
+				tryAgain = true;
 				continue; // No more services, or banned ip then go to the next category
 			}
 
@@ -88,9 +93,20 @@ puppeteer.use(StealthPlugin());
 				}
 			});
 
-			if (!moreService) break
+			if (!moreService) {
+				await page.close();
+				await browser.close();
+
+				break;
+			}
 			else {
-				if (moreService == 'banned') continue;
+				if (moreService == 'banned') {
+					await page.close();
+					await browser.close();
+					
+					tryAgain = true;
+					continue;
+				}
 				moreService.forEach(service => (serviceURLList.push(service)));
 			}
 
@@ -112,7 +128,9 @@ puppeteer.use(StealthPlugin());
 			});
 
 			for (let k = 0; k < serviceURLList.length; k++) {
-				let serviceURL = serviceURLList[k];
+				if (!tryAgain) {
+					serviceURL = serviceURLList[k];
+				}
 
 				proxy = lastProxyIndex
 					? await getRandomProxy(lastProxyIndex)
@@ -166,7 +184,13 @@ puppeteer.use(StealthPlugin());
 							if (err) return console.error(err);
 							console.log(failedRequestItem, ' — failed request info added (banned)');
 						});
+
+						tryAgain = true;
+						await page.close();
+						await browser.close();
+
 					} else {
+						tryAgain = false;
 						let serviceInfoItem = new ServiceInfo({
 							category: serviceInfo.category,
 							title: serviceInfo.title,
@@ -201,6 +225,7 @@ puppeteer.use(StealthPlugin());
 
 					await page.close();
 					await browser.close();
+					tryAgain = true;
 				}
 			}
 		} else {
