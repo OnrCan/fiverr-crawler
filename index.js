@@ -35,6 +35,7 @@ puppeteer.use(StealthPlugin());
 	let categoryURL, pageNumber = 0, moreService;
 
 	for (let i = 0; i < categoryURLList.length; i++) {
+		serviceURLList = [];
 		do {
 			if (!tryAgain) {
 				pageNumber++;
@@ -246,9 +247,6 @@ puppeteer.use(StealthPlugin());
 			continue; // No more services, or banned ip then go to the next category
 		}
 	}
-
-	await page.close();
-	await browser.close();
 
 	console.log("==============================")
 	console.log("CRAWLING FINISHED!")
