@@ -90,8 +90,10 @@ puppeteer.use(StealthPlugin());
 				if (typeof elements !== "undefined" && elements.length !== 0) {
 					return [...elements].map(item => item.getAttribute('href'));
 				} else {
-					if (document.querySelector('h1').innerText == "One Small Step" || document.querySelector('h1').innerText == "Access Denied") { // Banned
-						return 'banned';
+					if (document.querySelector('h1')) {
+						if (document.querySelector('h1').innerText == "One Small Step" || document.querySelector('h1').innerText == "Access Denied") { // Banned
+							return 'banned';
+						}
 					}
 					return false;
 				}
