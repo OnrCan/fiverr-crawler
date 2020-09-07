@@ -3,6 +3,7 @@ const getRandomProxy = require('./helpers/getRandomProxy').getRandomProxy;
 const getRandomUserAgent = require('./helpers/getRandomUserAgent').getRandomUserAgent;
 
 const moment = require('moment');
+var shell = require('shelljs');
 
 require('./database');
 const {
@@ -23,7 +24,7 @@ puppeteer.use(StealthPlugin());
 		lastProxyIndex = false,
 		userAgent,
 		tryAgain = false;
-	
+
 	var serviceURL,
 		serviceURLList = [];
 
@@ -80,6 +81,7 @@ puppeteer.use(StealthPlugin());
 
 				await page.close();
 				await browser.close();
+				shell.exec('pkill chrome');
 
 				tryAgain = true;
 				continue; // No more services, or banned ip then go to the next category
@@ -102,6 +104,7 @@ puppeteer.use(StealthPlugin());
 			if (!moreService) {
 				await page.close();
 				await browser.close();
+				shell.exec('pkill chrome');
 
 				break;
 			}
@@ -109,7 +112,8 @@ puppeteer.use(StealthPlugin());
 				if (moreService == 'banned') {
 					await page.close();
 					await browser.close();
-					
+					shell.exec('pkill chrome');
+
 					tryAgain = true;
 					continue;
 				}
@@ -118,6 +122,7 @@ puppeteer.use(StealthPlugin());
 
 			await page.close();
 			await browser.close();
+			shell.exec('pkill chrome');
 
 		} while (true);
 
@@ -135,102 +140,105 @@ puppeteer.use(StealthPlugin());
 			});
 
 			for (let k = 0; k < serviceURLList.length; k++) {
-				if (!tryAgain) {
-					serviceURL = serviceURLList[k];
-				}
+				serviceURL = serviceURLList[k];
+				do {
+					proxy = lastProxyIndex
+						? await getRandomProxy(lastProxyIndex)
+						: await getRandomProxy();
+					lastProxyIndex = proxy.index;
 
-				proxy = lastProxyIndex
-					? await getRandomProxy(lastProxyIndex)
-					: await getRandomProxy();
-				lastProxyIndex = proxy.index;
-
-				browser = await puppeteer.launch({
-					headless: true,
-					args: [
-						`--proxy-server=${proxy.ip}:${proxy.port}`
-					]
-				});
-				page = await browser.newPage();
-				await page.authenticate({
-					username: proxy.username,
-					password: proxy.password
-				});
-
-				userAgent = await getRandomUserAgent();
-				await page.setUserAgent(`${userAgent}`);
-				try {
-					await page.goto(`https://www.fiverr.com${serviceURL}`, { waitUntil: 'load', timeout: 0 });	
-
-					let serviceInfo = await page.evaluate(() => {
-						let category = [...document.querySelectorAll('.breadcrumbs a')]
-							.map(el => el.innerText);
-						let title = document.querySelector('h1').innerText;
-						let ordersInQueue = document.querySelector('.orders-in-queue')
-							? document.querySelector('.orders-in-queue').innerText.split(' ')[0]
-							: "0";
-	
-						return {
-							category: category[0],
-							subCategory: category[1],
-							title: title,
-							ordersInQueue: ordersInQueue
-						}
+					browser = await puppeteer.launch({
+						headless: true,
+						args: [
+							`--proxy-server=${proxy.ip}:${proxy.port}`
+						]
+					});
+					page = await browser.newPage();
+					await page.authenticate({
+						username: proxy.username,
+						password: proxy.password
 					});
 
-					if (serviceInfo.title == "One Small Step" || serviceInfo.title == "Access Denied") { // Banned
-						let failedRequestItem = new FailedRequest({
+					userAgent = await getRandomUserAgent();
+					await page.setUserAgent(`${userAgent}`);
+					try {
+						await page.goto(`https://www.fiverr.com${serviceURL}`, { waitUntil: 'load', timeout: 0 });
+
+						let serviceInfo = await page.evaluate(() => {
+							let category = [...document.querySelectorAll('.breadcrumbs a')]
+								.map(el => el.innerText);
+							let title = document.querySelector('h1').innerText;
+							let ordersInQueue = document.querySelector('.orders-in-queue')
+								? document.querySelector('.orders-in-queue').innerText.split(' ')[0]
+								: "0";
+
+							return {
+								category: category[0],
+								subCategory: category[1],
+								title: title,
+								ordersInQueue: ordersInQueue
+							}
+						});
+
+						if (serviceInfo.title == "One Small Step" || serviceInfo.title == "Access Denied") { // Banned
+							let failedRequestItem = new FailedRequest({
+								timeStamp: moment().format("DD-MM-YYYY hh:mm a"),
+								type: 'service',
+								categoryURL: categoryURL,
+								url: `https://www.fiverr.com${serviceURL}`,
+								proxyIP: `${proxy.ip}:${proxy.port}`,
+								userAgent: `${userAgent}`,
+								reason: `banned`
+							});
+
+							failedRequestItem.save(function (err, failedRequestItem) {
+								if (err) return console.error(err);
+								console.log(failedRequestItem, ' — failed request info added (banned)');
+							});
+
+							tryAgain = true;
+							continue;
+
+						} else {
+							tryAgain = false;
+							let serviceInfoItem = new ServiceInfo({
+								timeStamp: moment().format("DD-MM-YYYY hh:mm a"),
+								category: serviceInfo.category,
+								subCategory: serviceInfo.subCategory,
+								title: serviceInfo.title,
+								ordersInQueue: serviceInfo.ordersInQueue,
+								url: `https://www.fiverr.com${serviceURL}`
+							});
+
+							serviceInfoItem.save(function (err, serviceInfoItem) {
+								if (err) return console.error(err);
+								console.log(serviceInfoItem, ' — service info added');
+							});
+							break;
+						}
+					} catch (error) {
+						let failedRequestTimeoutService = new FailedRequest({
 							timeStamp: moment().format("DD-MM-YYYY hh:mm a"),
 							type: 'service',
 							categoryURL: categoryURL,
 							url: `https://www.fiverr.com${serviceURL}`,
 							proxyIP: `${proxy.ip}:${proxy.port}`,
 							userAgent: `${userAgent}`,
-							reason: `banned`
-						});
-	
-						failedRequestItem.save(function (err, failedRequestItem) {
-							if (err) return console.error(err);
-							console.log(failedRequestItem, ' — failed request info added (banned)');
+							reason: `timeout`
 						});
 
+						failedRequestTimeoutService.save(function (err, failedRequestTimeoutService) {
+							if (err) return console.error(err);
+							console.log(failedRequestTimeoutService, ' — failed request info added (timeout)');
+						});
 						tryAgain = true;
-
-					} else {
-						tryAgain = false;
-						let serviceInfoItem = new ServiceInfo({
-							timeStamp: moment().format("DD-MM-YYYY hh:mm a"),
-							category: serviceInfo.category,
-							subCategory: serviceInfo.subCategory,
-							title: serviceInfo.title,
-							ordersInQueue: serviceInfo.ordersInQueue,
-							url: `https://www.fiverr.com${serviceURL}`
-						});
-						
-						serviceInfoItem.save(function (err, serviceInfoItem) {
-							if (err) return console.error(err);
-							console.log(serviceInfoItem, ' — service info added');
-						});
+						continue;
 					}
-				} catch (error) {
-					let failedRequestTimeoutService = new FailedRequest({
-						timeStamp: moment().format("DD-MM-YYYY hh:mm a"),
-						type: 'service',
-						categoryURL: categoryURL,
-						url: `https://www.fiverr.com${serviceURL}`,
-						proxyIP: `${proxy.ip}:${proxy.port}`,
-						userAgent: `${userAgent}`,
-						reason: `timeout`
-					});
-
-					failedRequestTimeoutService.save(function (err, failedRequestTimeoutService) {
-						if (err) return console.error(err);
-						console.log(failedRequestTimeoutService, ' — failed request info added (timeout)');
-					});
-					tryAgain = true;
-				}
+				} while (true)
 				await page.waitFor(process.env.WAIT_PAGE_DELAY || 8000)
 				await page.close();
 				await browser.close();
+				shell.exec('pkill chrome');
 			}
 		} else {
 			let failedRequestItem = new FailedRequest({

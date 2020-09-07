@@ -14,6 +14,7 @@
     "puppeteer": "^5.2.1",
     "puppeteer-extra": "^3.1.13",
     "puppeteer-extra-plugin-stealth": "^2.5.0",
-    "puppeteer-page-proxy": "^1.2.8"
+    "puppeteer-page-proxy": "^1.2.8",
+    "shelljs": "^0.8.4"
   }
 }
