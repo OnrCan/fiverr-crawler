@@ -3,9 +3,10 @@ const mongoose = require('mongoose');
 const { Schema } = mongoose;
 
 const categoryURLSchema = new Schema({
-  url: String
+  url: String,
+  isCrawled: Boolean
 });
 
-const CategoryURL = mongoose.model('CategoryURL', categoryURLSchema);
+const CategoryURL = mongoose.model('category-url', categoryURLSchema);
 
 module.exports = CategoryURL;
