@@ -163,65 +163,7 @@ const setPage = async () => {
 	await sleep(3000);
 
 	// Loop through all the urls and collect all the services urls' under them
-	for (let i = 0; i < categories.length; i++) {
-		serviceURLList = [];
-
-		let category = categories[i]
-		log(chalk.bgWhite(chalk.black(category)));
-		await sleep(3000);
-
-		// Iterate through service pages until ends
-		do {
-			if (!tryAgain) {
-				pageNumber++;
-				categoryURL = `${category.url}?page=${pageNumber}`;
-				log(chalk.bgRgb(148,0,211)(`Scraping: ${categoryURL}`));
-			}
-
-			await setBrowser(true);
-			await setPage();
-
-			try {
-				await PAGE.goto(`${categoryURL}`, { waitUntil: 'load', timeout: 0 });
-				tryAgain = false; // We assume the page succesfully loaded, ban check is made later
-			} catch (error) {
-				logFailedRequest('Category', { url: categoryURL, categoryID: category.id });
-				tryAgain = true;
-				continue; // No more services, or banned ip then go to the next category
-			}
-
-			moreService = await PAGE.evaluate(() => {
-				let elements = document.querySelectorAll('a.media');
-
-				if (typeof elements !== "undefined" && elements.length !== 0) {
-					return [...elements].map(item => item.getAttribute('href'));
-				} else {
-
-					if (!document.querySelector('h1')) { // NO HEADING IN THE PAGE MEANS THERE IS NOT SUCH PAGE
-						return 'can';
-					} else {
-						if (document.querySelector('h1').innerText == "One Small Step"
-							|| document.querySelector('h1').innerText == "Access Denied") { // Banned
-							return 'banned';
-						}
-					}
-				}
-			});
-
-			if (!moreService) {
-				log(chalk.red('no more service'));
-				break;
-			}
-			else {
-				if (moreService == 'banned') {
-					tryAgain = true;
-					continue;
-				}
-				// Insert service urls into DB.service-urls
-				await putServiceURLs(moreService, category);
-			}
-		} while (true);
-	}
+	await crawlServiceURLs(categories);
 
 	// if (serviceURLList.length) {
 	// 	serviceURLList.forEach(url => {
@@ -358,6 +300,67 @@ const setPage = async () => {
 	console.log("CRAWLING FINISHED!")
 	console.log("==============================")
 })().then(process.exit);
+
+const crawlServiceURLs = async (categories) => {
+	for (let i = 0; i < categories.length; i++) {
+
+		// Little logging
+		let category = categories[i]
+		log(chalk.bgWhite(chalk.black(category)));
+
+		// Iterate through service pages until ends
+		do {
+			if (!tryAgain) {
+				pageNumber++;
+				categoryURL = `${category.url}?page=${pageNumber}`;
+				log(chalk.bgRgb(148,0,211)(`Scraping: ${categoryURL}`));
+			}
+
+			await setBrowser(true);
+			await setPage();
+
+			try {
+				await PAGE.goto(`${categoryURL}`, { waitUntil: 'load', timeout: 0 });
+				tryAgain = false; // We assume the page succesfully loaded, ban check is made later
+			} catch (error) {
+				logFailedRequest('Category', { url: categoryURL, categoryID: category.id });
+				tryAgain = true;
+				continue; // No more services, or banned ip then go to the next category
+			}
+
+			moreService = await PAGE.evaluate(() => {
+				let elements = document.querySelectorAll('a.media');
+
+				if (typeof elements !== "undefined" && elements.length !== 0) {
+					return [...elements].map(item => item.getAttribute('href'));
+				} else {
+
+					if (!document.querySelector('h1')) { // NO HEADING IN THE PAGE MEANS THERE IS NOT SUCH PAGE
+						return 'can';
+					} else {
+						if (document.querySelector('h1').innerText == "One Small Step"
+							|| document.querySelector('h1').innerText == "Access Denied") { // Banned
+							return 'banned';
+						}
+					}
+				}
+			});
+
+			if (!moreService) {
+				log(chalk.red('no more service'));
+				break;
+			}
+			else {
+				if (moreService == 'banned') {
+					tryAgain = true;
+					continue;
+				}
+				// Insert service urls into DB.service-urls
+				await putServiceURLs(moreService, category);
+			}
+		} while (true);
+	}
+}
 
 function logFailedRequest(type, keyValue) {
 	let failedReqest = new FailedRequest({
