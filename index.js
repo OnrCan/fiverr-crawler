@@ -33,8 +33,11 @@ let PROXY = null,
 	BROWSER = undefined,
 	BROWSER_EXIST = false,
 	PAGE = undefined,
+
 	lastProxyIndex = undefined,
-	userAgent = ''
+	userAgent = '',
+	tryAgain = false,
+	pageNumber = 0
 
 /**
  * Here we check several things;
@@ -74,7 +77,7 @@ const prepareCategoryURLTable = async () => {
 const putCategoryURLs = async (urlList) => {
 	for (let i = 0; i < urlList.length; i++) {
 		let url = urlList[i];
-		let record = new CategoryURL({ 'url': url, 'crawled': false });
+		let record = new CategoryURL({ 'url': url, 'isCrawled': false });
 		let saved = await record.save();
 
 		log(chalk.yellow(`Category URL's been saved: ${saved}\n${i + 1}/${urlList.length}`));
@@ -121,7 +124,7 @@ const setBrowser = async (newProxyCredentials = true) => {
 
 	// LAUNCH BROWSER WITH PROXY CREDENTIALS
 	BROWSER = await puppeteer.launch({
-		headless: true,
+		headless: false,
 		args: [`--proxy-server=${PROXY.ip}:${PROXY.port}`]
 	});
 
@@ -133,7 +136,7 @@ const setPage = async () => {
 		await setBrowser(true);
 	}
 	
-	PAGE = BROWSER.newPage();
+	PAGE = await BROWSER.newPage();
 	
 	await PAGE.authenticate({
 		username: PROXY.username,
@@ -146,13 +149,6 @@ const setPage = async () => {
 
 (async () => {
 	await prepareCategoryURLTable();
-	let a = await getCategoryURL();
-	log(a[0].id);
-	process.exit();
-})();
-
-(async () => {
-
 	await initializePuppeteer();
 
 	// Query the not crawled records
@@ -167,6 +163,8 @@ const setPage = async () => {
 		serviceURLList = [];
 
 		let category = categories[i]
+		log(chalk.bgWhite(chalk.black(category)));
+		await sleep(3000);
 
 		// Iterate through service pages until ends
 		do {
@@ -207,6 +205,7 @@ const setPage = async () => {
 			});
 
 			if (!moreService) {
+				log(chalk.red('no service'));
 				// No more service, write service urls into DB
 				await putServiceURLs(serviceURLList, category.id);
 				break;
