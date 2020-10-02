@@ -40,12 +40,12 @@ let PROXY = null,
 	pageNumber = 0
 
 /**
+ * 
  * Here we check several things;
+ * 
  * #1 Is category-url table has documents?
  * 	#1.1 (Yes) - continue;
  * 	#1.2 (No) - put the @categoryURLs into category-url table
- * 
- * #2 Check the last crawled category-url.id and continue with next category-url
  * 
  */
 const prepareCategoryURLTable = async () => {
