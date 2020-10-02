@@ -1,3 +1,6 @@
+const chalk = require('chalk');
+const log = console.log;
+
 require('../../database');
 const {
 	CategoryURL
