@@ -124,7 +124,7 @@ const setBrowser = async (newProxyCredentials = true) => {
 
 	// LAUNCH BROWSER WITH PROXY CREDENTIALS
 	BROWSER = await puppeteer.launch({
-		headless: false,
+		headless: true,
 		args: [`--proxy-server=${PROXY.ip}:${PROXY.port}`]
 	});
 
