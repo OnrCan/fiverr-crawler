@@ -209,7 +209,7 @@ const setPage = async () => {
 			});
 
 			if (!moreService) {
-				log(chalk.red('no service'));
+				log(chalk.red('no more service'));
 				break;
 			}
 			else {
