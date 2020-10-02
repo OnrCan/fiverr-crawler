@@ -84,10 +84,14 @@ const putCategoryURLs = async (urlList) => {
 	}
 }
 
-const putServiceURLs = async (urlList, categoryID) => {
+const putServiceURLs = async (urlList, category) => {
 	for (let i = 0; i < urlList.length; i++) {
-		let url = urlList[i];
-		let record = new ServiceURL({ 'url': url, 'crawled': false, 'category': categoryID });
+		let serviceUrl = urlList[i];
+		let record = new ServiceURL({
+			'url': serviceUrl,
+			'crawled': false,
+			'category': category.id
+		});
 		let saved = await record.save();
 
 		log(chalk.bgYellow(chalk.black(`Service URL's been saved: ${saved}\n${i + 1}/${urlList.length}`)));
@@ -124,7 +128,7 @@ const setBrowser = async (newProxyCredentials = true) => {
 
 	// LAUNCH BROWSER WITH PROXY CREDENTIALS
 	BROWSER = await puppeteer.launch({
-		headless: true,
+		headless: false,
 		args: [`--proxy-server=${PROXY.ip}:${PROXY.port}`]
 	});
 
@@ -181,7 +185,7 @@ const setPage = async () => {
 				await PAGE.goto(`${categoryURL}`, { waitUntil: 'load', timeout: 0 });
 				tryAgain = false; // We assume the page succesfully loaded, ban check is made later
 			} catch (error) {
-				logFailedRequest('Category', { categoryID: category.id });
+				logFailedRequest('Category', { url: categoryURL, categoryID: category.id });
 				tryAgain = true;
 				continue; // No more services, or banned ip then go to the next category
 			}
@@ -194,7 +198,7 @@ const setPage = async () => {
 				} else {
 
 					if (!document.querySelector('h1')) { // NO HEADING IN THE PAGE MEANS THERE IS NOT SUCH PAGE
-						return false;
+						return 'can';
 					} else {
 						if (document.querySelector('h1').innerText == "One Small Step"
 							|| document.querySelector('h1').innerText == "Access Denied") { // Banned
@@ -206,8 +210,6 @@ const setPage = async () => {
 
 			if (!moreService) {
 				log(chalk.red('no service'));
-				// No more service, write service urls into DB
-				await putServiceURLs(serviceURLList, category.id);
 				break;
 			}
 			else {
@@ -215,8 +217,8 @@ const setPage = async () => {
 					tryAgain = true;
 					continue;
 				}
-				serviceURLList = [...serviceURLList, ...moreService];
-				// moreService.forEach(service => (serviceURLList.push(service)));
+				// Insert service urls into DB.service-urls
+				await putServiceURLs(moreService, category);
 			}
 		} while (true);
 	}
