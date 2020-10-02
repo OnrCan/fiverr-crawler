@@ -156,7 +156,7 @@ const setPage = async () => {
 	await initializePuppeteer();
 
 	// Query the not crawled records
-	let categories = await getCategoryURL({ 'crawled': false });
+	let categories = await getCategoryURL({ 'isCrawled': false });
 
 	// Informative message
 	log(chalk.bgGreenBright(chalk.black(`Crawling is starting...\n++++++++++++++++++++++++`)));
