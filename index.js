@@ -83,7 +83,10 @@ const prepareCategoryURLTable = async () => {
 const putCategoryURLs = async (urlList) => {
 	for (let i = 0; i < urlList.length; i++) {
 		let url = urlList[i];
-		let record = new CategoryURL({ 'url': url, 'isCrawled': false });
+		let record = new CategoryURL({
+			'url': url,
+			'isCrawled': false
+		});
 		let saved = await record.save();
 
 		log(chalk.yellow(`Category URL's been saved: ${saved}\n${i + 1}/${urlList.length}`));
@@ -100,8 +103,9 @@ const putServiceURLs = async (urlList, category) => {
 	for (let i = 0; i < urlList.length; i++) {
 		let serviceUrl = urlList[i];
 		let record = new ServiceURL({
+			'timeStamp': moment().format("DD-MM-YYYY hh:mm a"),
 			'url': serviceUrl,
-			'crawled': false,
+			'isCrawled': false,
 			'category': category.id
 		});
 		let saved = await record.save();
