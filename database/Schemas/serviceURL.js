@@ -4,10 +4,11 @@ const { Schema } = mongoose;
 
 const serviceURLSchema = new Schema({
 	timeStamp: String,
-	categoryURL: String,
-	url: String
+	url: String,
+	isCrawled: Boolean,
+	category: String,
 });
 
-const ServiceURL = mongoose.model('ServiceURL', serviceURLSchema);
+const ServiceURL = mongoose.model('service-urls', serviceURLSchema);
 
 module.exports = ServiceURL;

@@ -16,7 +16,7 @@ const {
 	FailedRequest
 } = require('./database/Schemas');
 
-var getCategoryURL = require('./helpers/queries/getCategoryURL');
+var { getCategoryURL, getServiceURLtoCrawl } = require('./helpers/queries');
 
 // Utils
 const getRandomProxy = require('./helpers/getRandomProxy').getRandomProxy;
