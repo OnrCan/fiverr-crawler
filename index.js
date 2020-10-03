@@ -74,6 +74,12 @@ const prepareCategoryURLTable = async () => {
 	}
 }
 
+/**
+ * Insert Category URLs gathered from the module into DB.category-urls
+ * 
+ * @param {Array} urlList Array for category urls
+ * @returns void
+*/
 const putCategoryURLs = async (urlList) => {
 	for (let i = 0; i < urlList.length; i++) {
 		let url = urlList[i];
@@ -84,6 +90,12 @@ const putCategoryURLs = async (urlList) => {
 	}
 }
 
+/**
+ * Insert Serive URLs into DB.service-urls
+ * 
+ * @param {Array} urlList Array for service url(s)
+ * @param {Object} category Object for the Category that service url(s) belong(s) to
+ */
 const putServiceURLs = async (urlList, category) => {
 	for (let i = 0; i < urlList.length; i++) {
 		let serviceUrl = urlList[i];
@@ -98,6 +110,11 @@ const putServiceURLs = async (urlList, category) => {
 	}
 }
 
+/**
+ * Initialize Puppeteer with Stealth Plugin
+ * 
+ * @returns {Promise}
+ */
 const initializePuppeteer = async () => {
 	return new Promise((resolve) => {
 		try {
@@ -110,6 +127,13 @@ const initializePuppeteer = async () => {
 	});
 };
 
+/**
+ * Initialize a new __headless__ browser.
+ * If there is already one, kill it.
+ * Set Proxy credentials
+ * 
+ * @param {Boolean} newProxyCredentials Is new proxy credentials needed?
+ */
 const setBrowser = async (newProxyCredentials = true) => {
 
 	// IF THERE IS AN EXISTING BROWSER, KILL IT
@@ -135,6 +159,10 @@ const setBrowser = async (newProxyCredentials = true) => {
 	BROWSER_EXIST = true;
 }
 
+/**
+ * Initialize a new tab in the browser.
+ * If there is not an existing browser, call setBrowser() to initialize.
+ */
 const setPage = async () => {
 	if(!BROWSER_EXIST) {
 		await setBrowser(true);
