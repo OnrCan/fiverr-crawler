@@ -392,13 +392,14 @@ const crawlServiceURLs = async (categories) => {
 			}
 		} while (true);
 
+		// Mark the crawled category document in DB
 		await CategoryURL.findByIdAndUpdate(
 			category.id,
 			{ 'isCrawled': true },
 			true,
 			(err, doc) => {
 				err
-					? chalk.bgRedBright(chalk.black(`category.isCrawled couldn't be set to true: \n ${doc}`)) // Update succesfull
+					? chalk.bgRedBright(chalk.black(`category.isCrawled couldn't be set to true: \n ${doc}`)) // Update failed
 					: chalk.bgCyan(chalk.black(`${doc}`)) // Update succesfull
 			}
 		);
