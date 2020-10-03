@@ -391,6 +391,17 @@ const crawlServiceURLs = async (categories) => {
 				await putServiceURLs(moreService, category);
 			}
 		} while (true);
+
+		await CategoryURL.findByIdAndUpdate(
+			category.id,
+			{ 'isCrawled': true },
+			true,
+			(err, doc) => {
+				err
+					? chalk.bgRedBright(chalk.black(`category.isCrawled couldn't be set to true: \n ${doc}`)) // Update succesfull
+					: chalk.bgCyan(chalk.black(`${doc}`)) // Update succesfull
+			}
+		);
 	}
 }
 
