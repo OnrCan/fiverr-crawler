@@ -165,7 +165,7 @@ const setBrowser = async (newProxyCredentials = true) => {
 
 /**
  * Initialize a new tab in the browser.
- * If there is not an existing browser, call setBrowser() to initialize.
+ * If there is not an existing browser, it calls setBrowser() to initialize.
  */
 const setPage = async () => {
 	if(!BROWSER_EXIST) {
