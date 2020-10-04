@@ -406,13 +406,13 @@ const crawlServiceURLs = async (categories) => {
 	}
 }
 
-function logFailedRequest(type, keyValue) {
+function logFailedRequest(type, rest) {
 	let failedReqest = new FailedRequest({
 		timeStamp: moment().format("DD-MM-YYYY hh:mm a"),
 		proxyIP: `${PROXY.ip}:${PROXY.port}`,
 		userAgent: `${userAgent}`,
 		type: type,
-		...keyValue
+		...rest
 	});
 
 	failedReqest.save(function (err, failedReqest) {
