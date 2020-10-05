@@ -11,6 +11,6 @@ const serviceInfoSchema = new Schema({
 	url: String
 });
 
-const ServiceInfo = mongoose.model('ServiceInfo', serviceInfoSchema);
+const ServiceInfo = mongoose.model('service-information', serviceInfoSchema);
 
 module.exports = ServiceInfo;

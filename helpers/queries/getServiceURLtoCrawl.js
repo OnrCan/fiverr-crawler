@@ -7,10 +7,9 @@ const {
 } = require('../../database/Schemas');
 
 const getServiceURLtoCrawl = async (query = {}) => {
-	const result = await ServiceURL.find({...query}, (err, urlList) => {
-		if (err) return log(chalk.bgRed(`Error on Service URL collection: ` + err));
-
-		return urlList;
+	const result = await ServiceURL.findOne({...query}, (err, url) => {
+		if (err) return log(chalk.bgRed(`Error on Service URL fetching: ` + err));
+		return url;
 	});
 
 	return result;

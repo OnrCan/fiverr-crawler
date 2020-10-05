@@ -115,6 +115,27 @@ const putServiceURLs = async (urlList, category) => {
 }
 
 /**
+ * Insert Service Information into DB.service-information
+ * 
+ * @param {Object} serviceInfo Object contains service information
+ * @param {String} serviceURL Crawled service url
+ */
+const putServiceInformation = async (serviceInfo, serviceURL) => {
+	let serviceInfoItem = new ServiceInfo({
+		'timeStamp': moment().format("DD-MM-YYYY hh:mm a"),
+		'category': serviceInfo.category,
+		'subCategory': serviceInfo.subCategory,
+		'title': serviceInfo.title,
+		'ordersInQueue': serviceInfo.ordersInQueue,
+		'url': `https://www.fiverr.com${serviceURL}`
+	});
+
+	let saved = await serviceInfoItem.save();
+
+	log(chalk.bgYellow(chalk.black(`Service Information's been saved: ${saved}\n`)));
+}
+
+/**
  * Initialize Puppeteer with Stealth Plugin
  * 
  * @returns {Promise}
@@ -189,7 +210,6 @@ const setPage = async () => {
 
 	// Query the not crawled records
 	let categories = await getCategoryURL({ 'isCrawled': false });
-
 	// Informative message
 	log(chalk.bgGreenBright(chalk.black(`Crawling is starting...\n++++++++++++++++++++++++`)));
 	await sleep(3000);
@@ -197,136 +217,13 @@ const setPage = async () => {
 	// Loop through all the urls and collect all the services urls' under them
 	await crawlServiceURLs(categories);
 
-	// if (serviceURLList.length) {
-	// 	serviceURLList.forEach(url => {
-	// 		let serviceURLItem = new ServiceURL({
-	// 			timeStamp: moment().format("DD-MM-YYYY hh:mm a"),
-	// 			categoryURL: `${categoryURL}`,
-	// 			url: `${url}`
-	// 		});
-	// 		serviceURLItem.save(function (err, serviceURLItem) {
-	// 			if (err) return console.error(err);
-	// 			console.log(url, ' — service url added');
-	// 		});
-	// 	});
+	let serviceLength = await getNotCrawledServiceURLListLength();
+	// Informative message
+	log(chalk.bgGreenBright(chalk.black(`\n\n\n\n\nNumber of ${serviceLength} service url's been found. Service Information crawling is starting...\n\n\n\n\n++++++++++++++++++++++++`)));
+	await sleep(3000);
+	// Loop through all the service urls and insert the required information into DB.service-information
+	await crawlServiceInformation(serviceLength);
 
-	// 	for (let k = 0; k < serviceURLList.length; k++) {
-	// 		serviceURL = serviceURLList[k];
-	// 		do {
-	// 			proxy = lastProxyIndex
-	// 				? await getRandomProxy(lastProxyIndex)
-	// 				: await getRandomProxy();
-	// 			lastProxyIndex = proxy.index;
-
-	// 			browser = await puppeteer.launch({
-	// 				headless: true,
-	// 				args: [
-	// 					`--proxy-server=${proxy.ip}:${proxy.port}`
-	// 				]
-	// 			});
-	// 			page = await browser.newPage();
-	// 			await page.authenticate({
-	// 				username: proxy.username,
-	// 				password: proxy.password
-	// 			});
-
-	// 			userAgent = await getRandomUserAgent();
-	// 			await page.setUserAgent(`${userAgent}`);
-	// 			try {
-	// 				await page.goto(`https://www.fiverr.com${serviceURL}`, { waitUntil: 'load', timeout: 0 });
-
-	// 				let serviceInfo = await page.evaluate(() => {
-	// 					let category = [...document.querySelectorAll('.breadcrumbs a')]
-	// 						.map(el => el.innerText);
-	// 					let title = document.querySelector('h1').innerText;
-	// 					let ordersInQueue = document.querySelector('.orders-in-queue')
-	// 						? document.querySelector('.orders-in-queue').innerText.split(' ')[0]
-	// 						: "0";
-
-	// 					return {
-	// 						category: category[0],
-	// 						subCategory: category[1],
-	// 						title: title,
-	// 						ordersInQueue: ordersInQueue
-	// 					}
-	// 				});
-
-	// 				if (serviceInfo.title == "One Small Step" || serviceInfo.title == "Access Denied") { // Banned
-	// 					let failedRequestItem = new FailedRequest({
-	// 						timeStamp: moment().format("DD-MM-YYYY hh:mm a"),
-	// 						type: 'service',
-	// 						categoryURL: categoryURL,
-	// 						url: `https://www.fiverr.com${serviceURL}`,
-	// 						proxyIP: `${proxy.ip}:${proxy.port}`,
-	// 						userAgent: `${userAgent}`,
-	// 						reason: `banned`
-	// 					});
-
-	// 					failedRequestItem.save(function (err, failedRequestItem) {
-	// 						if (err) return console.error(err);
-	// 						console.log(failedRequestItem, ' — failed request info added (banned)');
-	// 					});
-
-	// 					tryAgain = true;
-	// 					continue;
-
-	// 				} else {
-	// 					tryAgain = false;
-	// 					let serviceInfoItem = new ServiceInfo({
-	// 						timeStamp: moment().format("DD-MM-YYYY hh:mm a"),
-	// 						category: serviceInfo.category,
-	// 						subCategory: serviceInfo.subCategory,
-	// 						title: serviceInfo.title,
-	// 						ordersInQueue: serviceInfo.ordersInQueue,
-	// 						url: `https://www.fiverr.com${serviceURL}`
-	// 					});
-
-	// 					serviceInfoItem.save(function (err, serviceInfoItem) {
-	// 						if (err) return console.error(err);
-	// 						console.log(serviceInfoItem, ' — service info added');
-	// 					});
-	// 					break;
-	// 				}
-	// 			} catch (error) {
-	// 				let failedRequestTimeoutService = new FailedRequest({
-	// 					timeStamp: moment().format("DD-MM-YYYY hh:mm a"),
-	// 					type: 'service',
-	// 					categoryURL: categoryURL,
-	// 					url: `https://www.fiverr.com${serviceURL}`,
-	// 					proxyIP: `${proxy.ip}:${proxy.port}`,
-	// 					userAgent: `${userAgent}`,
-	// 					reason: `timeout`
-	// 				});
-
-	// 				failedRequestTimeoutService.save(function (err, failedRequestTimeoutService) {
-	// 					if (err) return console.error(err);
-	// 					console.log(failedRequestTimeoutService, ' — failed request info added (timeout)');
-	// 				});
-	// 				tryAgain = true;
-	// 				continue;
-	// 			}
-	// 		} while (true)
-	// 		await page.waitFor(process.env.WAIT_PAGE_DELAY || 8000)
-	// 		await page.close();
-	// 		await browser.close();
-	// 		shell.exec('pkill chrome');
-	// 	}
-	// } else {
-	// 	let failedRequestItem = new FailedRequest({
-	// 		timeStamp: moment().format("DD-MM-YYYY hh:mm a"),
-	// 		type: 'category',
-	// 		categoryURL: categoryURL,
-	// 		proxyIP: `${proxy.ip}:${proxy.port}`,
-	// 		userAgent: `${userAgent}`,
-	// 		reason: `No more services, or banned ip`
-	// 	});
-
-	// 	failedRequestItem.save(function (err, failedRequestItem) {
-	// 		if (err) return console.error(err);
-	// 		console.log(failedRequestItem, ' — failed request info added (No more services, or banned ip)');
-	// 	});
-	// 	continue; // No more services, or banned ip then go to the next category
-	// }
 
 	console.log("==============================")
 	console.log("CRAWLING FINISHED!")
@@ -334,79 +231,157 @@ const setPage = async () => {
 })().then(process.exit);
 
 const crawlServiceURLs = async (categories) => {
-	for (let i = 0; i < categories.length; i++) {
+	if (categories !== null && categories.length > 0) {
+		for (let i = 0; i < categories.length; i++) {
 
-		// Little logging
-		let category = categories[i]
-		log(chalk.bgWhite(chalk.black(category)));
-
-		// Iterate through service pages until ends
-		do {
-			if (!tryAgain) {
-				pageNumber++;
-				categoryURL = `${category.url}?page=${pageNumber}`;
-				log(chalk.bgRgb(148,0,211)(`Scraping: ${categoryURL}`));
-			}
-
-			await setBrowser(true);
-			await setPage();
-
-			try {
-				await PAGE.goto(`${categoryURL}`, { waitUntil: 'load', timeout: 0 });
-				tryAgain = false; // We assume the page succesfully loaded, ban check is made later
-			} catch (error) {
-				logFailedRequest('Category', { url: categoryURL, categoryID: category.id });
-				tryAgain = true;
-				continue; // No more services, or banned ip then go to the next category
-			}
-
-			moreService = await PAGE.evaluate(() => {
-				let elements = document.querySelectorAll('a.media');
-
-				if (typeof elements !== "undefined" && elements.length !== 0) {
-					return [...elements].map(item => item.getAttribute('href'));
-				} else {
-
-					if (!document.querySelector('h1')) { // NO HEADING IN THE PAGE MEANS THERE IS NOT SUCH PAGE
-						return 'can';
+			// Little logging
+			let category = categories[i]
+			log(chalk.bgWhite(chalk.black(category)));
+	
+			// Iterate through service pages until ends
+			do {
+				if (!tryAgain) {
+					pageNumber++;
+					categoryURL = `${category.url}?page=${pageNumber}`;
+					log(chalk.bgRgb(148,0,211)(`Scraping: ${categoryURL}`));
+				}
+	
+				await setBrowser(true);
+				await setPage();
+	
+				try {
+					await PAGE.goto(`${categoryURL}`, { waitUntil: 'load', timeout: 0 });
+					tryAgain = false; // We assume the page succesfully loaded, ban check is made later
+				} catch (error) {
+					await logFailedRequest('Category', { url: categoryURL, categoryID: category.id });
+					tryAgain = true;
+					continue; // No more services, or banned ip then go to the next category
+				}
+	
+				moreService = await PAGE.evaluate(() => {
+					let elements = document.querySelectorAll('a.media');
+	
+					if (typeof elements !== "undefined" && elements.length !== 0) {
+						return [...elements].map(item => item.getAttribute('href'));
 					} else {
-						if (document.querySelector('h1').innerText == "One Small Step"
-							|| document.querySelector('h1').innerText == "Access Denied") { // Banned
-							return 'banned';
+	
+						if (!document.querySelector('h1')) { // NO HEADING IN THE PAGE MEANS THERE IS NOT SUCH PAGE
+							return 'can';
+						} else {
+							if (document.querySelector('h1').innerText == "One Small Step"
+								|| document.querySelector('h1').innerText == "Access Denied") { // Banned
+								return 'banned';
+							}
 						}
 					}
+				});
+	
+				if (!moreService) {
+					log(chalk.red('no more service'));
+					break;
 				}
-			});
-
-			if (!moreService) {
-				log(chalk.red('no more service'));
-				break;
-			}
-			else {
-				if (moreService == 'banned') {
-					tryAgain = true;
-					continue;
+				else {
+					if (moreService == 'banned') {
+						tryAgain = true;
+						continue;
+					}
+					// Insert service urls into DB.service-urls
+					await putServiceURLs(moreService, category);
 				}
-				// Insert service urls into DB.service-urls
-				await putServiceURLs(moreService, category);
-			}
-		} while (true);
-
-		// Mark the crawled category document in DB
-		await CategoryURL.findByIdAndUpdate(
-			category.id,
-			{ 'isCrawled': true },
-			true,
-			(err, doc) => {
-				err
-					? chalk.bgRedBright(chalk.black(`category.isCrawled couldn't be set to true: \n ${doc}`)) // Update failed
-					: chalk.bgCyan(chalk.black(`${doc}`)) // Update succesfull
-			}
-		);
+			} while (true);
+	
+			// Mark the crawled category document in DB
+			await CategoryURL.findByIdAndUpdate(
+				category.id,
+				{ 'isCrawled': true },
+				true,
+				(err, doc) => {
+					err
+						? chalk.bgRedBright(chalk.black(`category.isCrawled couldn't be set to true: \n ${doc}`)) // Update failed
+						: chalk.bgCyan(chalk.black(`${doc}`)) // Update succesfull
+				}
+			);
+		}
 	}
 }
 
-function logFailedRequest(type, rest) {
+const crawlServiceInformation = async (servicesLength) => {
+	let tryAgain = false;
+	let service = {};
+
+	if (servicesLength && servicesLength > 0) {
+		for (let i = 0; i < servicesLength; i++) {
+			do {
+
+				if (!tryAgain) {
+					service = await getServiceURLtoCrawl({ 'isCrawled': false });
+			
+					if (!service) {
+						log(chalk.red('no more service'));
+						return;
+					}
+				}
+		
+				await setBrowser(true);
+				await setPage();
+				await sleep(8000); // Cooldown for detection system
+		
+				try {
+					await PAGE.goto(`https://www.fiverr.com${service.url}`, { waitUntil: 'load', timeout: 0 });
+		
+					let serviceInfo = await PAGE.evaluate(() => {
+						let category = [...document.querySelectorAll('.breadcrumbs a')]
+							.map(el => el.innerText);
+						let title = document.querySelector('h1').innerText;
+						let ordersInQueue = document.querySelector('.orders-in-queue')
+							? document.querySelector('.orders-in-queue').innerText.split(' ')[0]
+							: "0";
+		
+						return {
+							category: category[0],
+							subCategory: category[1],
+							title: title,
+							ordersInQueue: ordersInQueue
+						}
+					});
+		
+					if (serviceInfo & (serviceInfo.title == "One Small Step" || serviceInfo.title == "Access Denied")) { // Banned
+						await logFailedRequest('SERVICE', {
+							url: `https://www.fiverr.com${service.url}`,
+							reason: `banned`
+						});
+						tryAgain = true;
+						continue;
+					} else {
+						tryAgain = false;
+						await putServiceInformation(serviceInfo, serviceURL);
+						break;
+					}
+				} catch (error) {
+					await logFailedRequest('SERVICE', {
+						url: `https://www.fiverr.com${service.url}`,
+						reason: `timeout`
+					});
+					tryAgain = true;
+					continue;
+				}
+			} while (true)
+
+			await ServiceInfo.findByIdAndUpdate(
+				service.id,
+				{ 'isCrawled': true },
+				true,
+				(err, doc) => {
+					err
+						? chalk.bgRedBright(chalk.black(`service.isCrawled couldn't be set to true: \n ${doc}`)) // Update failed
+						: chalk.bgCyan(chalk.black(`${doc}`)) // Update succesfull
+				}
+			);
+		}
+	}
+}
+
+const logFailedRequest = async (type, rest) => {
 	let failedReqest = new FailedRequest({
 		timeStamp: moment().format("DD-MM-YYYY hh:mm a"),
 		proxyIP: `${PROXY.ip}:${PROXY.port}`,
