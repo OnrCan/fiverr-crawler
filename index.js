@@ -85,7 +85,8 @@ const putCategoryURLs = async (urlList) => {
 		let url = urlList[i];
 		let record = new CategoryURL({
 			'url': url,
-			'isCrawled': false
+			'isCrawled': false,
+			'page': 0
 		});
 		let saved = await record.save();
 
@@ -177,9 +178,9 @@ const setBrowser = async (newProxyCredentials = true) => {
 
 	// LAUNCH BROWSER WITH PROXY CREDENTIALS
 	BROWSER = await puppeteer.launch({
-		headless: false,
-		args: [`--proxy-server=${PROXY.ip}:${PROXY.port}`]
+		headless: true,
 	});
+	// args: [`--proxy-server=${PROXY.ip}:${PROXY.port}`]
 
 	BROWSER_EXIST = true;
 }
@@ -195,10 +196,10 @@ const setPage = async () => {
 	
 	PAGE = await BROWSER.newPage();
 	
-	await PAGE.authenticate({
-		username: PROXY.username,
-		password: PROXY.password
-	});
+	// await PAGE.authenticate({
+	// 	username: PROXY.username,
+	// 	password: PROXY.password
+	// });
 
 	userAgent = await getRandomUserAgent();
 	await PAGE.setUserAgent(`${userAgent}`);
@@ -237,10 +238,37 @@ const crawlServiceURLs = async (categories) => {
 			// Little logging
 			let category = categories[i]
 			log(chalk.bgWhite(chalk.black(category)));
+
+			let lastPageCrawled = await CategoryURL.findById(category.id, (err, doc) => {
+				if (err) return 0;
+
+				return doc;
+			});
+
+			lastPageCrawled.page
+				? pageNumber = lastPageCrawled
+				: pageNumber = 0;
 	
 			// Iterate through service pages until ends
 			do {
 				if (!tryAgain) {
+
+					// Mark the crawled category.page document in DB
+					let status = await CategoryURL.findOneAndUpdate(
+						{"_id": category.id},
+						{ $set: {'page': pageNumber} },
+						{'new': true},
+						(err, doc) => {
+							if (err) {
+								log(chalk.bgRedBright(chalk.black(`category.page couldn't be set: \n ${err}`))) // Update failed
+								return false;
+							}
+							log(chalk.bgCyan(chalk.black(`${doc}`))) // Update succesfull
+							return true;
+						}
+					);
+					if (!status) continue;
+					
 					pageNumber++;
 					categoryURL = `${category.url}?page=${pageNumber}`;
 					log(chalk.bgRgb(148,0,211)(`Scraping: ${categoryURL}`));
@@ -266,7 +294,7 @@ const crawlServiceURLs = async (categories) => {
 					} else {
 	
 						if (!document.querySelector('h1')) { // NO HEADING IN THE PAGE MEANS THERE IS NOT SUCH PAGE
-							return 'can';
+							return false;
 						} else {
 							if (document.querySelector('h1').innerText == "One Small Step"
 								|| document.querySelector('h1').innerText == "Access Denied") { // Banned
@@ -287,18 +315,19 @@ const crawlServiceURLs = async (categories) => {
 					}
 					// Insert service urls into DB.service-urls
 					await putServiceURLs(moreService, category);
+					await sleep(2000);
 				}
 			} while (true);
 	
 			// Mark the crawled category document in DB
-			await CategoryURL.findByIdAndUpdate(
-				category.id,
-				{ 'isCrawled': true },
-				true,
+			await CategoryURL.findOneAndUpdate(
+				{"_id": category.id},
+				{ $set: {'isCrawled': true} },
+				{ "new": true },
 				(err, doc) => {
 					err
-						? chalk.bgRedBright(chalk.black(`category.isCrawled couldn't be set to true: \n ${doc}`)) // Update failed
-						: chalk.bgCyan(chalk.black(`${doc}`)) // Update succesfull
+						? log(chalk.bgRedBright(chalk.black(`category.isCrawled couldn't be set to true: \n ${doc}`))) // Update failed
+						: log(chalk.bgCyan(chalk.black(`${doc}`))) // Update succesfull
 				}
 			);
 		}
@@ -367,14 +396,14 @@ const crawlServiceInformation = async (servicesLength) => {
 				}
 			} while (true)
 
-			await ServiceInfo.findByIdAndUpdate(
-				service.id,
-				{ 'isCrawled': true },
-				true,
+			await ServiceInfo.findOneAndUpdate(
+				{"_id": service.id},
+				{ $set: {'isCrawled': true} },
+				{ "new": true },
 				(err, doc) => {
 					err
-						? chalk.bgRedBright(chalk.black(`service.isCrawled couldn't be set to true: \n ${doc}`)) // Update failed
-						: chalk.bgCyan(chalk.black(`${doc}`)) // Update succesfull
+						? log(chalk.bgRedBright(chalk.black(`service.isCrawled couldn't be set to true: \n ${doc}`))) // Update failed
+						: log(chalk.bgCyan(chalk.black(`${doc}`))) // Update succesfull
 				}
 			);
 		}
