@@ -14,7 +14,6 @@ const options = {
   "pass": "p94En4mQuq7BM2q"
 };
 
-// const database = mongoose.connect(process.env.DATABASE_URL || 'mongodb://127.0.0.1:27017/crawler', options)
 const database = mongoose.connect(process.env.DATABASE_URL || 'mongodb://142.93.248.194:27017/fiverr-crawler-mirror', options)
   .then(() => console.log('Connected to database.'))
   .catch(err => console.error('Error connecting to database:', err.message));
