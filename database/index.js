@@ -8,13 +8,13 @@ const options = {
   useNewUrlParser: true,
   useUnifiedTopology: true,
   "auth": {
-    "authSource": "admin"
+    "authSource": "admin" // If you set auth on the mongodb server
   },
-  "user": "ankush",
-  "pass": "p94En4mQuq7BM2q"
+  "user": "##username##",
+  "pass": "##password##"
 };
 
-const database = mongoose.connect(process.env.DATABASE_URL || 'mongodb://142.93.248.194:27017/fiverr-crawler-mirror', options)
+const database = mongoose.connect(process.env.DATABASE_URL || '[SERVER ADDRESS & DATABASE NAME GOES HERE]', options)
   .then(() => console.log('Connected to database.'))
   .catch(err => console.error('Error connecting to database:', err.message));
 
