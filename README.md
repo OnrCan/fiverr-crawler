@@ -1,3 +1,7 @@
+
+#Dependencies
+sudo apt-get install libxss1
+
 #1 Go to `database/index.js` file and place the database credentials.
 
 #2
